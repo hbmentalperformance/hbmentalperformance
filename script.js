@@ -27,15 +27,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Simple contact form handler (no backend wired up yet)
+  // Contact form handler — submits to Netlify Forms via AJAX so the page doesn't redirect
   var form = document.getElementById('contact-form');
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var status = document.getElementById('form-status');
-      if (status) {
-        status.textContent = "Thanks — this form isn't connected to an inbox yet. For now, email hanna@hbmentalperformance.com directly.";
-      }
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var formData = new FormData(form);
+      if (submitBtn) submitBtn.disabled = true;
+      if (status) status.textContent = 'Sending...';
+
+      fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData).toString()
+      }).then(function (response) {
+        if (response.ok) {
+          if (status) status.textContent = "Thanks — your message is on its way. I'll get back to you soon.";
+          form.reset();
+        } else {
+          throw new Error('Form submission failed');
+        }
+      }).catch(function () {
+        if (status) status.textContent = "Something went wrong sending that — please email hanna@hbmentalperformance.com directly for now.";
+      }).finally(function () {
+        if (submitBtn) submitBtn.disabled = false;
+      });
     });
   }
 
